@@ -10,4 +10,5 @@ lto = true
 panic = "abort"
 
 [dependencies]
-threadpool = "1.0"
+clap = "2.33.0"
+walkdir = "2.2.9"

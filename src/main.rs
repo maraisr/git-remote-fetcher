@@ -1,27 +1,31 @@
+extern crate clap;
+extern crate walkdir;
+
 use std::path::Path;
 
-extern crate threadpool;
+use clap::{App as Clap, Arg};
 
 // Try mio
 // rayon threads
 
+static LOCATION_TOKEN: &str = "LOCATION";
+
 fn main() {
+    let matches = Clap::new("Git Remote Fetcher [grf]")
+        .arg(
+            Arg::with_name(LOCATION_TOKEN)
+                .help("A location to find .git folders")
+                .required(true)
+                .default_value("C:\\Users\\marais\\Sites")
+                .index(1),
+        )
+        .get_matches();
 
-    let pool = threadpool::ThreadPool::new(20);
+    let start_location = Path::new(matches.value_of(LOCATION_TOKEN).unwrap());
 
-    let startPath: &Path = Path::new("C:\\Users\\marais\\Sites\\");
+    if !start_location.exists() {
+        panic!("{:?} does not exist!", start_location)
+    };
 
-    startPath.read_dir()
-        .unwrap()
-        .for_each(|path| {
-           pool.execute(move || {
-               task(path.unwrap().path().as_path());
-           })
-        });
-
-    pool.join()
-}
-
-fn task(path: &Path) {
-    println!("Running at {:?}", path);
+    println!("{:?}", matches.value_of(LOCATION_TOKEN).unwrap());
 }
