@@ -1,0 +1,13 @@
+[package]
+name = "git-remote-fetcher"
+version = "0.1.0"
+authors = ["Marais Rossouw <me@maraisr.com>"]
+publish = false
+edition = "2018"
+
+[profile.release]
+lto = true
+panic = "abort"
+
+[dependencies]
+threadpool = "1.0"
