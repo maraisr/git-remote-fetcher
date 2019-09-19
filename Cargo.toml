@@ -11,4 +11,3 @@ panic = "abort"
 
 [dependencies]
 clap = "2.33.0"
-walkdir = "2.2.9"
