@@ -5,9 +5,20 @@ authors = ["Marais Rossouw <me@maraisr.com>"]
 publish = false
 edition = "2018"
 
+[[bin]]
+name = "grf"
+path = "src/main.rs"
+doc = false
+
 [profile.release]
+opt-level = 3
+debug = false
 lto = true
 panic = "abort"
 
 [dependencies]
 clap = "2.33.0"
+git2 = "0.10"
+rayon = "1.2.0"
+scan_dir = "0.3.3"
+num_cpus = "1.10.1"
