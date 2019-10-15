@@ -13,7 +13,7 @@ use git2::{FetchOptions, RemoteCallbacks, Repository};
 use rayon::ThreadPoolBuilder;
 use scan_dir::ScanDir;
 use std::fs::DirEntry;
-use std::io::Write;
+use std::io::{self, Write};
 
 static LOCATION_TOKEN: &str = "LOCATION";
 
@@ -54,20 +54,22 @@ fn main() {
     test.iter().for_each(|repo| {
         //pool.install(|| {
         repo.remotes().unwrap().iter().for_each(|x| {
+            let mut remote = repo.find_remote(x.unwrap()).unwrap();
+
+            println!("Fetching {:?} at {:?}", remote.name().unwrap(), repo.path());
+
             let mut cb = RemoteCallbacks::new();
 
-            cb.sideband_progress(|data| {
-                println!("Remote: {:?}", ::std::str::from_utf8(data).unwrap());
-                ::std::io::stdout().flush().unwrap();
-                true
+            cb.credentials(|_url, username, _cred_type| {
+                git2::Cred::ssh_key_from_agent(username.unwrap_or("git"))
             });
 
             let mut fo = FetchOptions::new();
             fo.remote_callbacks(cb);
-
-            repo.find_remote(x.unwrap())
-                .unwrap()
-                .download(&[], Some(&mut fo))
+            remote.download(&[], Some(&mut fo)).unwrap();
+            remote.disconnect();
+            remote
+                .update_tips(None, true, git2::AutotagOption::Unspecified, None)
                 .unwrap();
         })
         //})
