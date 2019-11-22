@@ -22,5 +22,5 @@ jobs:
           args: --release
       - uses: actions/upload-artifact@v1.0.0
         with:
-          name: GitRemoteFetcher
-          path: target/release/grf*
+          name: GitRemoteFetcher-${{ matrix.os }}
+          path: target/release/
