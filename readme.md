@@ -40,5 +40,3 @@ git-remote-fetcher <LOCATION>
   wants to do... Or unless I am missing something :man_shrugging:
 - Windows users
   [have to use Pageant](https://github.com/libssh2/libssh2/blob/81b2548fef64f1d278ac02ff27aa0055b84c3776/src/agent.c#L277-L279)
-
-> If you use GitKraken, Sourcetree or any GUI's. You will not have this problem.
