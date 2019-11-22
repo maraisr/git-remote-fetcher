@@ -12,7 +12,15 @@ jobs:
       TZ: Australia/Brisbane
     steps:
       - uses: actions/checkout@v1
+      - uses: actions/cache@v1
+        with:
+          path: target/
+          key: ${{ matrix.os }}-${{ hashFiles('Cargo.lock') }}
       - uses: actions-rs/cargo@v1
         with:
           command: build
           args: --release
+      - uses: actions/upload-artifact@v1.0.0
+        with:
+          name: GitRemoteFetcher
+          path: target/release/grf*
