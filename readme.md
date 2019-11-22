@@ -2,18 +2,18 @@
 
 ## :ok_hand: Why
 
-As a high paced engineer working on many git repo's, I faced an annoying
-problem. And that was, most companies I work for enforce up to date heads when
-pushing branches. Which is'nt a problem if you're the only author to a branch,
-but sometimes more than 1 more collaborate, and I found myself git committing,
-then pushing only for the remote to reject it.
+As a high paced engineer working on many git repos I faced an annoying problem;
+most companies I work for enforce up to date heads when pushing branches. This,
+and I am one of those infamous rebase'ers, which is not a problem if you are the
+only author of a branch. But, sometimes there is more than one collaborator. I
+also found myself git committing, then pushing only for the remote to reject it.
 
-So; I ran up a quick and dirty crontab to git fetch some of my repo's every 5
-mins, and with fishshell's help, I got instant feedback when my head was out of
-date.
+So, I ran up a quick and dirty crontab to git fetch some of my repos every five
+minutes, and with fishshell's help, I got instant feedback when my head was out
+of date.
 
-This is just an app that wraps that idea, in tool I hope to grow, as well as be
-a product I can use to learn rust along for the ride as well.
+This software wraps that idea in tool-form. I hope to grow this tool while
+learning rust along the way.
 
 ## :dragon_face: Usage
 
@@ -35,8 +35,10 @@ git-remote-fetcher <LOCATION>
 
 ## :poop: Known issues
 
-- Currently your repos must use ssh authentication, because I somehow need to
-  store username and passwords for http style repos. Or unless im missing
-  something :man_shrugging:
+- Currently your repos must use ssh authentication, because somehow I need to
+  store a username and password for http style repos; which, I mean, no one
+  wants to do... Or unless I am missing something :man_shrugging:
 - Windows users
   [have to use Pageant](https://github.com/libssh2/libssh2/blob/81b2548fef64f1d278ac02ff27aa0055b84c3776/src/agent.c#L277-L279)
+
+> If you use GitKraken, Sourcetree or any GUI's. You will not have this problem.
