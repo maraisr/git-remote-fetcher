@@ -19,6 +19,4 @@ panic = "abort"
 [dependencies]
 clap = "2.33.0"
 git2 = "0.10"
-rayon = "1.2.0"
 scan_dir = "0.3.3"
-num_cpus = "1.10.1"
