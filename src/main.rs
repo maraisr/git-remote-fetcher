@@ -1,13 +1,14 @@
 extern crate clap;
 extern crate git2;
-extern crate scan_dir;
 
+use std::borrow::Borrow;
+use std::fs::{read_dir, ReadDir};
+use std::io;
 use std::path::Path;
 use std::vec::Vec;
 
 use clap::{App as Clap, Arg};
 use git2::{FetchOptions, RemoteCallbacks, Repository};
-use scan_dir::ScanDir;
 
 static LOCATION_TOKEN: &str = "LOCATION";
 
@@ -31,11 +32,13 @@ fn main() {
 		panic!("{:?} does not exist!", start_location)
 	};
 
-	// TODO: Is start a git repo?
+	if let Some(_repo) = is_git_repo(&start_location) {
+		// TODO: Do something with root, and ignore get_all_git_dirs
+	}
 
-	let test = get_all_git_directories(&start_location);
+	let git_roots = get_all_git_directories(&start_location);
 
-	test.iter().for_each(|repo| {
+	git_roots.iter().for_each(|repo| {
 		repo.remotes().unwrap().iter().for_each(|x| {
 			let mut remote = repo.find_remote(x.unwrap()).unwrap();
 
@@ -59,22 +62,31 @@ fn main() {
 }
 
 fn get_all_git_directories(location: &Path) -> Vec<Repository> {
-	// TODO: Look at this https://play.rust-lang.org/?gist=89ffaf05037e91c149e3d6a4b5352462&version=stable
-	ScanDir::dirs()
-		.walk(location, |mut iter| {
-			let mut fin: Vec<Repository> = Vec::new();
+	let mut fin: Vec<Repository> = Vec::new();
 
-			while let Some((entry, _name)) = iter.next() {
-				let maybe_repo = Repository::open(entry.path().as_path());
+	walk_dir(location, &mut fin);
 
-				if !maybe_repo.is_ok() {
-					iter.exit_current_dir();
-				} else {
-					fin.push(maybe_repo.unwrap());
+	#[inline]
+	fn walk_dir(dir: &Path, fin: &mut Vec<Repository>) -> io::Result<()> {
+		if dir.is_dir() {
+			for entry in read_dir(dir)? {
+				let entry = entry?;
+				let path = entry.path();
+
+				if let Some(repo) = is_git_repo(&path) {
+					fin.push(repo);
+				} else if path.is_dir() {
+					walk_dir(&path, fin)?;
 				}
 			}
+		}
 
-			fin
-		})
-		.unwrap()
+		Ok(())
+	}
+
+	fin
+}
+
+fn is_git_repo(path: &Path) -> Option<Repository> {
+	Repository::open(&path).ok()
 }
