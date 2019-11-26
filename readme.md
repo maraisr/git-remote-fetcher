@@ -32,11 +32,13 @@ git-remote-fetcher <LOCATION>
 - [ ] Add in a .ignore type file, to specify either repos or directories to not
       fetch
 - [ ] Specify which origins, rather than _all_ like it is now
+- [ ] When an error happens, depending on where, we shouldn't fail there, but
+      exit 1. ie try everything, and panic at the end maybe
 
 ## :poop: Known issues
 
-- Currently your repos must use ssh authentication, because somehow I need to
-  store a username and password for http style repos; which, I mean, no one
-  wants to do... Or unless I am missing something :man_shrugging:
 - Windows users
   [have to use Pageant](https://github.com/libssh2/libssh2/blob/81b2548fef64f1d278ac02ff27aa0055b84c3776/src/agent.c#L277-L279)
+  for SSH
+- Windows users if you're using username/password you have to use a [credentials
+  helper(https://github.com/microsoft/Git-Credential-Manager-for-Windows)
