@@ -1,14 +1,15 @@
 extern crate clap;
 extern crate git2;
 
-use std::borrow::Borrow;
 use std::fs::{read_dir, ReadDir};
 use std::io;
 use std::path::Path;
 use std::vec::Vec;
 
 use clap::{App as Clap, Arg};
-use git2::{FetchOptions, RemoteCallbacks, Repository};
+use git2::{FetchOptions, Remote, RemoteCallbacks, Repository};
+use std::error::Error;
+use std::io::Write;
 
 static LOCATION_TOKEN: &str = "LOCATION";
 
@@ -39,25 +40,15 @@ fn main() {
 	let git_roots = get_all_git_directories(&start_location);
 
 	git_roots.iter().for_each(|repo| {
-		repo.remotes().unwrap().iter().for_each(|x| {
-			let mut remote = repo.find_remote(x.unwrap()).unwrap();
+		println!("\rUpdating {}", repo.workdir().unwrap().to_str().unwrap());
 
-			println!("Fetching {:?} at {:?}", remote.name().unwrap(), repo.path());
-
-			let mut cb = RemoteCallbacks::new();
-
-			cb.credentials(|_url, username, _cred_type| {
-				git2::Cred::ssh_key_from_agent(username.unwrap_or("git"))
+		repo.remotes()
+			.unwrap()
+			.iter()
+			.filter_map(|x| repo.find_remote(x.unwrap()).ok())
+			.for_each(move |mut remote| {
+				fetch_remote_for_repo(&mut remote);
 			});
-
-			let mut fo = FetchOptions::new();
-			fo.remote_callbacks(cb);
-			remote.download(&[], Some(&mut fo)).unwrap();
-			remote.disconnect();
-			remote
-				.update_tips(None, true, git2::AutotagOption::Unspecified, None)
-				.unwrap();
-		})
 	});
 }
 
@@ -89,4 +80,62 @@ fn get_all_git_directories(location: &Path) -> Vec<Repository> {
 
 fn is_git_repo(path: &Path) -> Option<Repository> {
 	Repository::open(&path).ok()
+}
+
+fn fetch_remote_for_repo(remote: &mut Remote) -> std::option::Option<()> {
+	let remote_name = remote.name()?;
+
+	println!("\r\t[{}] fetching...", remote_name);
+
+	let mut cb = RemoteCallbacks::new();
+	cb.credentials(|_url, username, _cred_type| {
+		git2::Cred::ssh_key_from_agent(username.unwrap_or("git"))
+	});
+
+	cb.transfer_progress(|stats| {
+		print!(
+			"received {}/{} objects ({}) in {} bytes\r",
+			stats.received_objects(),
+			stats.total_objects(),
+			stats.indexed_objects(),
+			stats.received_bytes()
+		);
+		io::stdout().flush().unwrap();
+		true
+	});
+
+	let mut fo = FetchOptions::new();
+	fo.remote_callbacks(cb);
+
+	match remote.download(&[], Some(&mut fo)) {
+		Ok(_) => {
+			{
+				let stats = remote.stats();
+				if stats.received_bytes() > 0 {
+					println!(
+						"\r\treceived {} objects at {} bytes",
+						stats.total_objects(),
+						stats.received_bytes()
+					);
+				} else {
+					println!("\r\tup to date {}", remote.name().unwrap());
+				}
+			}
+
+			remote.disconnect();
+
+			remote
+				.update_tips(None, true, git2::AutotagOption::Unspecified, None)
+				.unwrap();
+		}
+		Err(e) => {
+			eprintln!(
+				"\r\tfailed fetching \"{}\" with message: {:?}",
+				remote.name()?,
+				e.message()
+			);
+		}
+	}
+
+	Some(())
 }
