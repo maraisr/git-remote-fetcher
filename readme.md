@@ -24,6 +24,12 @@ that is a git root.
 git-remote-fetcher <LOCATION>
 ```
 
+If you're repo are using the username/password clone, you have to be using a
+credentials manager. Please see
+[Caching your GitHub password in Git](https://help.github.com/en/github/using-git/caching-your-github-password-in-git)
+on how to enable that. Even if you're not using GitHub the process still
+applies.
+
 ## :bow: Ambition
 
 - [ ] Support glob style for directory, ie `git-remote-fetcher '~/{dev,sites}'`
@@ -40,5 +46,3 @@ git-remote-fetcher <LOCATION>
 - Windows users
   [have to use Pageant](https://github.com/libssh2/libssh2/blob/81b2548fef64f1d278ac02ff27aa0055b84c3776/src/agent.c#L277-L279)
   for SSH
-- Windows users if you're using username/password you have to use a [credentials
-  helper(https://github.com/microsoft/Git-Credential-Manager-for-Windows)
