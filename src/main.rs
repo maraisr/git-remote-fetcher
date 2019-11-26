@@ -1,15 +1,14 @@
 extern crate clap;
 extern crate git2;
 
-use std::fs::{read_dir, ReadDir};
+use std::fs::read_dir;
 use std::io;
+use std::io::Write;
 use std::path::Path;
 use std::vec::Vec;
 
 use clap::{App as Clap, Arg};
 use git2::{FetchOptions, Remote, RemoteCallbacks, Repository};
-use std::error::Error;
-use std::io::Write;
 
 static LOCATION_TOKEN: &str = "LOCATION";
 
@@ -40,7 +39,15 @@ fn main() {
 	let git_roots = get_all_git_directories(&start_location);
 
 	git_roots.iter().for_each(|repo| {
-		println!("\rUpdating {}", repo.workdir().unwrap().to_str().unwrap());
+		println!(
+			"\rUpdating {}",
+			repo.workdir()
+				.unwrap()
+				.strip_prefix(&start_location)
+				.unwrap()
+				.to_str()
+				.unwrap()
+		);
 
 		repo.remotes()
 			.unwrap()
@@ -85,11 +92,32 @@ fn is_git_repo(path: &Path) -> Option<Repository> {
 fn fetch_remote_for_repo(remote: &mut Remote) -> std::option::Option<()> {
 	let remote_name = remote.name()?;
 
-	println!("\r\t[{}] fetching...", remote_name);
+	print!("\r\t[{}] fetching...", remote_name);
+	io::stdout().flush().unwrap();
 
 	let mut cb = RemoteCallbacks::new();
-	cb.credentials(|_url, username, _cred_type| {
-		git2::Cred::ssh_key_from_agent(username.unwrap_or("git"))
+
+	// Took inspiration from: https://github.com/rust-lang/cargo/blob/a41c8eae701c33abd327d13ff5c057389d8801b9/src/cargo/sources/git/utils.rs#L410-L624
+	cb.credentials(|url, username, cred_type| {
+		if cred_type.is_ssh_key() {
+			return git2::Cred::ssh_key_from_agent(username.unwrap());
+		}
+
+		if cred_type.is_username() {
+			return git2::Cred::username(username.unwrap());
+		}
+
+		if cred_type.is_user_pass_plaintext() {
+			let cfg = git2::Config::open_default().unwrap();
+
+			return git2::Cred::credential_helper(&cfg, url, username);
+		}
+
+		if cred_type.is_default() {
+			return git2::Cred::default();
+		}
+
+		Err(git2::Error::from_str("no authentication available"))
 	});
 
 	cb.transfer_progress(|stats| {
@@ -113,12 +141,13 @@ fn fetch_remote_for_repo(remote: &mut Remote) -> std::option::Option<()> {
 				let stats = remote.stats();
 				if stats.received_bytes() > 0 {
 					println!(
-						"\r\treceived {} objects at {} bytes",
+						"\r\t[{}] received {} objects at {} bytes",
+						remote.name()?,
 						stats.total_objects(),
 						stats.received_bytes()
 					);
 				} else {
-					println!("\r\tup to date {}", remote.name().unwrap());
+					println!("\r\t[{}] up to date", remote.name()?);
 				}
 			}
 
