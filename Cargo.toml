@@ -17,5 +17,6 @@ lto = true
 panic = "abort"
 
 [dependencies]
-clap = "2.33.0"
+clap = "2.33"
 git2 = "0.10"
+futures = { version ="0.3", features = [] }
