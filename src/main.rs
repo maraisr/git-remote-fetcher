@@ -1,21 +1,14 @@
 extern crate clap;
-extern crate futures;
 extern crate git2;
 
 use std::fs::read_dir;
 use std::io;
-use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::thread;
 use std::vec::Vec;
 
 use clap::{App as Clap, Arg};
-use futures::executor::block_on;
-use futures::task::SpawnExt;
-use futures::{executor, StreamExt};
 use git2::{FetchOptions, Remote, RemoteCallbacks, Repository};
-use std::iter::Map;
-use std::thread::JoinHandle;
 
 fn main() {
 	let matches = Clap::new("Git Remote Fetcher [grf]")
@@ -37,15 +30,21 @@ fn main() {
 		panic!("{:?} does not exist!", start_location)
 	};
 
-	if let Some(_repo) = is_git_repo(&start_location) {
-		// TODO: Do something with root, and ignore get_all_git_dirs
+	let mut roots: Vec<PathBuf> = Vec::new();
+
+	if is_git_repo(&start_location) {
+		roots.push(start_location.to_path_buf());
+	} else {
+		roots.extend(get_all_git_directories(&start_location));
 	}
 
-	let git_roots = get_all_git_directories(&start_location);
+	run_fetchers_at(roots);
+}
 
+fn run_fetchers_at(roots: Vec<PathBuf>) {
 	let mut handlers = Vec::new();
 
-	for x in git_roots {
+	for x in roots {
 		handlers.push(thread::spawn(move || {
 			let repo = Repository::open(&x).unwrap();
 			fetch_all_remotes_for_repo(&repo);
@@ -69,7 +68,7 @@ fn get_all_git_directories(location: &Path) -> Vec<PathBuf> {
 				let entry = entry?;
 				let path = entry.path();
 
-				if let Some(repo) = is_git_repo(&path) {
+				if is_git_repo(&path) {
 					fin.push(path.to_owned());
 				} else if path.is_dir() {
 					walk_dir(&path, fin)?;
@@ -83,8 +82,8 @@ fn get_all_git_directories(location: &Path) -> Vec<PathBuf> {
 	fin
 }
 
-fn is_git_repo(path: &Path) -> Option<Repository> {
-	Repository::open(&path).ok()
+fn is_git_repo(path: &Path) -> bool {
+	Repository::open(&path).is_ok()
 }
 
 fn fetch_all_remotes_for_repo(repo: &Repository) {
