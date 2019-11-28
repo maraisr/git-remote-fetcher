@@ -7,7 +7,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest] # TODO: Add macos-latest and windows-latest also
+        os: [ubuntu-latest, macos-latest, windows-latest]
     env:
       TZ: Australia/Brisbane
     steps:
@@ -16,10 +16,17 @@ jobs:
         with:
           path: target/
           key: ${{ matrix.os }}-${{ hashFiles('Cargo.lock') }}
-      - uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release
+      - name: Install Rust (rustup)
+        run: |
+          rustup update stable
+          rustup default stable
+        if: matrix.os != 'macos-latest'
+      - name: Install Rust (macos)
+        run: |
+          curl https://sh.rustup.rs | sh -s -- -y
+          echo "##[add-path]$HOME/.cargo/bin"
+        if: matrix.os == 'macos-latest'
+      - run: cargo build --verbose --release
       - uses: actions/upload-artifact@v1.0.0
         with:
           name: GitRemoteFetcher-${{ matrix.os }}
