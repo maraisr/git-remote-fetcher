@@ -1,5 +1,8 @@
 # git-remote-fetcher(1) -- recursively fetches remote origins
 
+> A utility that fetches all remotes for all git roots south of a given
+> location.
+
 ## :ok_hand: Why
 
 As a high paced engineer working on many git repos I faced an annoying problem;

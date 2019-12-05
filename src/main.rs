@@ -11,12 +11,18 @@ use clap::{App as Clap, Arg};
 use git2::{FetchOptions, Remote, RemoteCallbacks, Repository};
 
 fn main() {
-	let matches = Clap::new("Git Remote Fetcher [grf]")
+	if let Err(_err) = run() {
+		::std::process::exit(1);
+	}
+}
+
+fn run() -> Result<(), Box<dyn (::std::error::Error)>> {
+	let matches = Clap::new("Git Remote Fetcher [git-remote-fetcher]")
+		.about("A utility that fetches all remotes for all git roots south of a given location.")
 		.arg(
 			Arg::with_name("location")
 				.help("A location to find git locations")
-				.required(true)
-				.index(1),
+				.required(true),
 		)
 		.get_matches();
 
@@ -38,10 +44,10 @@ fn main() {
 		roots.extend(get_all_git_directories(&start_location));
 	}
 
-	run_fetchers_at(roots);
+	run_fetchers_at(roots)
 }
 
-fn run_fetchers_at(roots: Vec<PathBuf>) {
+fn run_fetchers_at(roots: Vec<PathBuf>) -> Result<(), Box<dyn (::std::error::Error)>> {
 	let mut handlers = Vec::new();
 
 	for x in roots {
@@ -54,6 +60,8 @@ fn run_fetchers_at(roots: Vec<PathBuf>) {
 	for x in handlers {
 		let _ = x.join();
 	}
+
+	Ok(()) // TODO:  Maybe collect errors if there are any
 }
 
 fn get_all_git_directories(location: &Path) -> Vec<PathBuf> {
