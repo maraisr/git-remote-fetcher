@@ -111,17 +111,25 @@ fn fetch_remote_for_repo(remote: &mut Remote, repo_path: &Path) -> std::option::
 
 	let mut cb = RemoteCallbacks::new();
 
+	// TODO: Find a better way for this
+	let mut ssh_attempts = 0;
+	let mut username_attempts = 0;
+	let mut username_pass_attempts = 0;
+
 	// Took inspiration from: https://github.com/rust-lang/cargo/blob/a41c8eae701c33abd327d13ff5c057389d8801b9/src/cargo/sources/git/utils.rs#L410-L624
 	cb.credentials(|url, username, cred_type| {
-		if cred_type.is_ssh_key() {
+		if cred_type.is_ssh_key() && ssh_attempts < 2 {
+			ssh_attempts = ssh_attempts + 1;
 			return git2::Cred::ssh_key_from_agent(username.unwrap());
 		}
 
-		if cred_type.is_username() {
+		if cred_type.is_username() && username_pass_attempts < 2 {
+			username_attempts = username_attempts + 1;
 			return git2::Cred::username(username.unwrap());
 		}
 
-		if cred_type.is_user_pass_plaintext() {
+		if cred_type.is_user_pass_plaintext() && username_pass_attempts < 2 {
+			username_pass_attempts = username_pass_attempts + 1;
 			let cfg = git2::Config::open_default().unwrap();
 
 			return git2::Cred::credential_helper(&cfg, url, username);
