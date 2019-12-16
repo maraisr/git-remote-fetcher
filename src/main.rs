@@ -1,6 +1,3 @@
-extern crate clap;
-extern crate git2;
-
 use std::fs::read_dir;
 use std::io;
 use std::path::{Path, PathBuf};
@@ -10,13 +7,15 @@ use std::vec::Vec;
 use clap::{App as Clap, Arg};
 use git2::{FetchOptions, Remote, RemoteCallbacks, Repository};
 
+type Result<T> = std::result::Result<T, Box<dyn (::std::error::Error)>>;
+
 fn main() {
 	if let Err(_err) = run() {
 		::std::process::exit(1);
 	}
 }
 
-fn run() -> Result<(), Box<dyn (::std::error::Error)>> {
+fn run() -> Result<()> {
 	let matches = Clap::new("Git Remote Fetcher [git-remote-fetcher]")
 		.about("A utility that fetches all remotes for all git roots south of a given location.")
 		.arg(
@@ -47,13 +46,13 @@ fn run() -> Result<(), Box<dyn (::std::error::Error)>> {
 	run_fetchers_at(roots)
 }
 
-fn run_fetchers_at(roots: Vec<PathBuf>) -> Result<(), Box<dyn (::std::error::Error)>> {
+fn run_fetchers_at(roots: Vec<PathBuf>) -> Result<()> {
 	let mut handlers = Vec::new();
 
 	for x in roots {
 		handlers.push(thread::spawn(move || {
 			let repo = Repository::open(&x).unwrap();
-			fetch_all_remotes_for_repo(&repo);
+			fetch_all_remotes_for_repo(&repo).unwrap();
 		}));
 	}
 
@@ -94,14 +93,15 @@ fn is_git_repo(path: &Path) -> bool {
 	Repository::open(&path).is_ok()
 }
 
-fn fetch_all_remotes_for_repo(repo: &Repository) {
-	repo.remotes()
-		.unwrap()
+fn fetch_all_remotes_for_repo(repo: &Repository) -> Result<()> {
+	repo.remotes()?
 		.iter()
-		.filter_map(|x| repo.find_remote(x.unwrap()).ok())
+		.filter_map(|x| repo.find_remote(x?).ok())
 		.for_each(move |mut remote| {
 			fetch_remote_for_repo(&mut remote, repo.workdir().unwrap());
 		});
+
+	Ok(())
 }
 
 fn fetch_remote_for_repo(remote: &mut Remote, repo_path: &Path) -> std::option::Option<()> {
