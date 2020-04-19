@@ -1,8 +1,10 @@
 [package]
 name = "git-remote-fetcher"
+description = "A utility that fetches all remotes for all git roots south of a given location."
+license = "MIT"
 version = "0.1.0"
-authors = ["Marais Rossouw <me@maraisr.com>"]
-publish = false
+authors = ["Marais Rossouw <me@marais.io>"]
+publish = true
 edition = "2018"
 
 [[bin]]
