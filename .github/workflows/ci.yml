@@ -11,8 +11,8 @@ jobs:
     env:
       TZ: Australia/Brisbane
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions/cache@v1
+      - uses: actions/checkout@main
+      - uses: actions/cache@main
         with:
           path: ~/.cargo
           key: ${{ matrix.os }}-${{ hashFiles('Cargo.lock') }}
@@ -27,7 +27,7 @@ jobs:
           echo "##[add-path]$HOME/.cargo/bin"
         if: matrix.os == 'macos-latest'
       - run: cargo build --verbose --release
-      - uses: actions/upload-artifact@v1.0.0
+      - uses: actions/upload-artifact@main
         with:
           name: GitRemoteFetcher-${{ matrix.os }}
           path: target/release/
